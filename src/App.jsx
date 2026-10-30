@@ -4,6 +4,7 @@ import StudentList from "./components/StudentList";
 import StudentForm from "./components/StudentForm";
 import { useState } from "react";
 import "./App.css";
+import StudentFormUseReducer from "./components/StudentFormUseReducer";
 
 const App = () => {
   const name = "Student Management";
@@ -40,7 +41,8 @@ const App = () => {
     <div style={{ color: "orange", fontSize: "14px" }}>
       <Header title={name} />
       <main>
-        <StudentForm onAddSubmit={handleAddSubmit} />
+        {/* <StudentForm onAddSubmit={handleAddSubmit} /> */}
+        <StudentFormUseReducer onAddSubmit={handleAddSubmit} />
         <StudentList
           students={studentList}
           onDeleteStudent={handleDeleteStudent}
