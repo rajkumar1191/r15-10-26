@@ -331,4 +331,20 @@ names or CSS Modules for reusable and larger style definitions.
   - Pass callbacks when a child needs to request a parent-owned state change.
   - Use strict equality (===) for comparisons unless loose equality is
     deliberately required.
+
+  useRef -> access DOM elements and maintain values without triggering renders
+    - creates mutable reference objects
+    // const variableName = useRef(initialValue)
+
+  useMemo -> useMemo is mainly used to memorize the result of a calculation. 
+    -> it remembers a calculated value and recalculate it only when its dependencies change
+
+    const memorizedValue = useMemo(()=>{
+      return calculateFn();
+    },[dependencies])
+
+  useCallback  -> memorized function references
+    const memorizedFn = useCallback(()=>{
+      //function logic  
+    },[dependencies])
 */

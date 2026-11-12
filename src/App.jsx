@@ -1,59 +1,98 @@
 import Header from "./components/Header";
 // import Footer from "./components/Footer";
 import StudentList from "./components/StudentList";
-import StudentForm from "./components/StudentForm";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import StudentFormUseReducer from "./components/StudentFormUseReducer";
 
+const initialStudents = [
+  {
+    id: 1,
+    name: "Raj",
+    course: "React",
+  },
+  {
+    id: 2,
+    name: "Kumar",
+    course: "Angular",
+  },
+];
+
 const App = () => {
   let [name, setName] = useState("Student Management");
-
+  const [count, setCount] = useState(0);
   // useState()-> hook
+  const [studentList, setStudentList] = useState(initialStudents);
 
-  const students = [
-    {
-      id: 1,
-      name: "Raj",
-      course: "React",
-    },
-    {
-      id: 2,
-      name: "Kumar",
-      course: "Angular",
-    },
-  ];
-
-  const [studentList, setStudentList] = useState(students);
-
+  //no dependency array
   useEffect(() => {
     console.log("app rendered on every event");
   }); // triggers for every browser events
 
+  //empty dependency array
   useEffect(() => {
     console.log("app rendered on mount");
   }, []); // triggers only at the component mount
 
+  //dependency array
   useEffect(() => {
     console.log("app rendered on name variable update");
   }, [name]); // triggers only on the dependency get updates
 
+  const studentStats = useMemo(() => {
+    console.log("calculating student statistics...");
+
+    const total = studentList.length;
+
+    const reactStudents = studentList.filter(
+      (student) => student.course === "React",
+    ).length;
+    const angularStudents = studentList.filter(
+      (student) => student.course === "Angular",
+    ).length;
+
+    return {
+      total,
+      reactStudents,
+      angularStudents,
+    };
+  }, [studentList]);
+
   const handleAddSubmit = (student) => {
-    setStudentList((previousState) => [...previousState, student]);
+    if (student.name) {
+      setStudentList((previousState) => [...previousState, student]);
+    }
     console.log(studentList);
-    setName(`${name} - ${students.length}`);
+    setName(`${name} - ${studentList.length}`);
   };
 
-  const handleDeleteStudent = (id) => {
+  const handleDeleteStudent = useCallback((id) => {
     setStudentList((previousState) =>
       previousState.filter((student) => student.id != id),
     );
-  };
+  }, []);
 
   return (
     <div style={{ color: "orange", fontSize: "14px" }}>
       <Header title={name} />
+
+      <button onClick={() => setCount(count + 1)}>Increment : {count}</button>
       <main>
+        <section className="dashboard">
+          <div className="stat-card">
+            <h3>Total Students</h3>
+            <h1>{studentStats.total}</h1>
+          </div>
+          <div className="stat-card">
+            <h3>React Students</h3>
+            <h1>{studentStats.reactStudents}</h1>
+          </div>
+          <div className="stat-card">
+            <h3>Angular Students</h3>
+            <h1>{studentStats.angularStudents}</h1>
+          </div>
+        </section>
+
         {/* <StudentForm onAddSubmit={handleAddSubmit} /> */}
         <StudentFormUseReducer onAddSubmit={handleAddSubmit} />
         <StudentList

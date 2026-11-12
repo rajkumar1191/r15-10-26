@@ -1,4 +1,7 @@
+import { memo } from "react";
+
 const Header = ({ title }) => {
+  console.log("header component");
   return (
     <header>
       <h1>{title}</h1>
@@ -7,4 +10,4 @@ const Header = ({ title }) => {
   );
 };
 
-export default Header;
+export default memo(Header);
