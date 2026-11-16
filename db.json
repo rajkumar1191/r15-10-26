@@ -1,0 +1,35 @@
+{
+  "students": [
+    {
+      "id": "1",
+      "name": "Raj",
+      "course": "React"
+    },
+    {
+      "id": "2",
+      "name": "Kumar",
+      "course": "Angular"
+    },
+    {
+      "id": "3",
+      "name": "Arun",
+      "course": "React"
+    },
+    {
+      "id": "4",
+      "name": "Riya",
+      "course": "Angular"
+    },
+    {
+      "id": "Ft4nc0Z70Ys",
+      "name": "Rajkumar P",
+      "course": "React"
+    },
+    {
+      "id": "0NX8NsKxTrI",
+      "name": "Rajkumar P",
+      "course": "fdfd"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

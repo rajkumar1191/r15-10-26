@@ -4,25 +4,27 @@ import StudentList from "./components/StudentList";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import StudentFormUseReducer from "./components/StudentFormUseReducer";
+import { addStudent, getStudents } from "./services/studentServices";
 
-const initialStudents = [
-  {
-    id: 1,
-    name: "Raj",
-    course: "React",
-  },
-  {
-    id: 2,
-    name: "Kumar",
-    course: "Angular",
-  },
-];
+// const initialStudents = [
+//   {
+//     id: 1,
+//     name: "Raj",
+//     course: "React",
+//   },
+//   {
+//     id: 2,
+//     name: "Kumar",
+//     course: "Angular",
+//   },
+// ];
 
 const App = () => {
   let [name, setName] = useState("Student Management");
   const [count, setCount] = useState(0);
   // useState()-> hook
-  const [studentList, setStudentList] = useState(initialStudents);
+  // const [studentList, setStudentList] = useState(initialStudents);
+  const [studentList, setStudentList] = useState([]);
 
   //no dependency array
   useEffect(() => {
@@ -32,6 +34,17 @@ const App = () => {
   //empty dependency array
   useEffect(() => {
     console.log("app rendered on mount");
+
+    async function loadStudents() {
+      try {
+        const data = await getStudents();
+        setStudentList(data);
+      } catch (error) {
+        console.log(error.message);
+      }
+    }
+
+    loadStudents();
   }, []); // triggers only at the component mount
 
   //dependency array
@@ -58,9 +71,21 @@ const App = () => {
     };
   }, [studentList]);
 
-  const handleAddSubmit = (student) => {
+  const handleAddSubmit = async (student) => {
     if (student.name) {
-      setStudentList((previousState) => [...previousState, student]);
+      const added = await addStudent(student);
+      if (added.id) {
+        async function loadStudents() {
+          try {
+            const data = await getStudents();
+            setStudentList(data);
+          } catch (error) {
+            console.log(error.message);
+          }
+        }
+
+        loadStudents();
+      }
     }
     console.log(studentList);
     setName(`${name} - ${studentList.length}`);

@@ -347,4 +347,11 @@ names or CSS Modules for reusable and larger style definitions.
     const memorizedFn = useCallback(()=>{
       //function logic  
     },[dependencies])
+
+  fetch -> fetch is a buildin Javascript
+    fetch(url, options).then(response => response.json()).then(data =>{
+        //logic to handle data
+      }).catch(error =>{
+        //logic to handle error
+        })
 */
