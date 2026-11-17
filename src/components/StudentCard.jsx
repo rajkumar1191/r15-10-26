@@ -1,6 +1,6 @@
 import "./StudentCard.css";
 
-const StudentCard = ({ name, course, id, onDeleteStudent }) => {
+const StudentCard = ({ name, course, id, onDeleteStudent, onEditStudent }) => {
   return (
     <div className="student-card">
       <div>
@@ -14,6 +14,13 @@ const StudentCard = ({ name, course, id, onDeleteStudent }) => {
         onClick={() => onDeleteStudent(id)}
       >
         Delete
+      </button>
+
+      <button
+        className={course == "React" ? "del-button" : "button"}
+        onClick={() => onEditStudent(id)}
+      >
+        Edit
       </button>
     </div>
   );

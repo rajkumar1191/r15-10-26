@@ -4,7 +4,12 @@ import StudentList from "./components/StudentList";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import StudentFormUseReducer from "./components/StudentFormUseReducer";
-import { addStudent, getStudents } from "./services/studentServices";
+import {
+  addStudent,
+  deleteStudent,
+  getStudents,
+  updateStudent,
+} from "./services/studentServices";
 
 // const initialStudents = [
 //   {
@@ -22,6 +27,7 @@ import { addStudent, getStudents } from "./services/studentServices";
 const App = () => {
   let [name, setName] = useState("Student Management");
   const [count, setCount] = useState(0);
+  const [editData, setEditData] = useState({});
   // useState()-> hook
   // const [studentList, setStudentList] = useState(initialStudents);
   const [studentList, setStudentList] = useState([]);
@@ -91,11 +97,54 @@ const App = () => {
     setName(`${name} - ${studentList.length}`);
   };
 
-  const handleDeleteStudent = useCallback((id) => {
-    setStudentList((previousState) =>
-      previousState.filter((student) => student.id != id),
-    );
+  const handleEditSubmit = async (student) => {
+    if (student.name) {
+      const added = await updateStudent(student);
+      if (added.id) {
+        async function loadStudents() {
+          try {
+            const data = await getStudents();
+            setStudentList(data);
+          } catch (error) {
+            console.log(error.message);
+          }
+        }
+
+        loadStudents();
+      }
+    }
+    console.log(studentList);
+    setName(`${name} - ${studentList.length}`);
+  };
+
+  const handleDeleteStudent = useCallback(async (id) => {
+    if (id) {
+      const added = await deleteStudent(id);
+      if (added.id) {
+        async function loadStudents() {
+          try {
+            const data = await getStudents();
+            setStudentList(data);
+          } catch (error) {
+            console.log(error.message);
+          }
+        }
+
+        loadStudents();
+      }
+    }
+    console.log(studentList);
+    setName(`${name} - ${studentList.length}`);
   }, []);
+
+  const handleEditStudent = useCallback(
+    (id) => {
+      const selectedStudent = studentList.find((student) => student.id === id);
+
+      setEditData(selectedStudent);
+    },
+    [studentList],
+  );
 
   return (
     <div style={{ color: "orange", fontSize: "14px" }}>
@@ -119,10 +168,15 @@ const App = () => {
         </section>
 
         {/* <StudentForm onAddSubmit={handleAddSubmit} /> */}
-        <StudentFormUseReducer onAddSubmit={handleAddSubmit} />
+        <StudentFormUseReducer
+          onAddSubmit={handleAddSubmit}
+          editData={editData}
+          onEditStudent={handleEditSubmit}
+        />
         <StudentList
           students={studentList}
           onDeleteStudent={handleDeleteStudent}
+          onEditStudent={handleEditStudent}
         />
       </main>
     </div>

@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 
 const initialFormState = {
   values: {
@@ -22,6 +22,15 @@ const studentFormReducer = (state, action) => {
           [action.payload.name]: "",
         },
       };
+    case "LOAD_FORM":
+      return {
+        ...state,
+        values: {
+          name: action.payload.name,
+          course: action.payload.course,
+        },
+        errors: {},
+      };
     case "SET_ERRORS":
       return {
         ...state,
@@ -43,7 +52,7 @@ const studentFormReducer = (state, action) => {
   }
 };
 
-const StudentFormUseReducer = ({ onAddSubmit }) => {
+const StudentFormUseReducer = ({ onAddSubmit, editData, onEditStudent }) => {
   /*
 
     const [state, dispatch] = useReducer(reducer, initialState)
@@ -69,6 +78,16 @@ const StudentFormUseReducer = ({ onAddSubmit }) => {
   // const [course, setCourse] = useState("");
 
   const { values, errors } = formState;
+
+  useEffect(() => {
+    if (editData?.id) {
+      console.log(editData);
+      dispatch({
+        type: "LOAD_FORM",
+        payload: editData,
+      });
+    }
+  }, [editData]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -113,12 +132,16 @@ const StudentFormUseReducer = ({ onAddSubmit }) => {
     });
 
     const obj = {
-      id: Date.now(),
+      id: editData.id ? editData.id : Date.now(),
       name: values.name,
       course: values.course,
     };
 
-    onAddSubmit(obj);
+    if (editData.id) {
+      onEditStudent(obj);
+    } else {
+      onAddSubmit(obj);
+    }
     dispatch({ type: "RESET_FORM" });
   };
 
@@ -132,7 +155,9 @@ const StudentFormUseReducer = ({ onAddSubmit }) => {
         value={values.name}
         onChange={handleChange}
       />
-      {errors.name && <p>{errors.name}</p>}<br /><br />
+      {errors.name && <p>{errors.name}</p>}
+      <br />
+      <br />
       <input
         type="text"
         name="course"
@@ -140,9 +165,11 @@ const StudentFormUseReducer = ({ onAddSubmit }) => {
         value={values.course}
         onChange={handleChange}
       />
-      {errors.course && <p>{errors.course}</p>}<br /><br />
+      {errors.course && <p>{errors.course}</p>}
+      <br />
+      <br />
       <button className="button" type="submit">
-        Add Student
+        {editData.id ? "Edit Student" : "Add Student"}
       </button>
     </form>
   );
