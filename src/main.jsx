@@ -354,4 +354,10 @@ names or CSS Modules for reusable and larger style definitions.
       }).catch(error =>{
         //logic to handle error
         })
+
+
+  axios -> 
+    1. automatically convert response to json
+    2. reject 2xx
+    
 */

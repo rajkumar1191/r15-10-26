@@ -9,7 +9,7 @@ import {
   deleteStudent,
   getStudents,
   updateStudent,
-} from "./services/studentServices";
+} from "./services/studentServicesByAxios";
 
 // const initialStudents = [
 //   {
@@ -28,6 +28,7 @@ const App = () => {
   let [name, setName] = useState("Student Management");
   const [count, setCount] = useState(0);
   const [editData, setEditData] = useState({});
+  const [loading, setLoading] = useState(false);
   // useState()-> hook
   // const [studentList, setStudentList] = useState(initialStudents);
   const [studentList, setStudentList] = useState([]);
@@ -37,16 +38,25 @@ const App = () => {
     console.log("app rendered on every event");
   }); // triggers for every browser events
 
+  const delay = (ms) =>{
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
   //empty dependency array
   useEffect(() => {
     console.log("app rendered on mount");
 
     async function loadStudents() {
       try {
+        console.log(loading);
+        setLoading(true);
+
+        await delay(5000)
         const data = await getStudents();
         setStudentList(data);
       } catch (error) {
         console.log(error.message);
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -83,10 +93,13 @@ const App = () => {
       if (added.id) {
         async function loadStudents() {
           try {
+            setLoading(true);
             const data = await getStudents();
             setStudentList(data);
           } catch (error) {
             console.log(error.message);
+          } finally {
+            setLoading(false);
           }
         }
 
@@ -103,10 +116,13 @@ const App = () => {
       if (added.id) {
         async function loadStudents() {
           try {
+            setLoading(true);
             const data = await getStudents();
             setStudentList(data);
           } catch (error) {
             console.log(error.message);
+          } finally {
+            setLoading(false);
           }
         }
 
@@ -123,10 +139,13 @@ const App = () => {
       if (added.id) {
         async function loadStudents() {
           try {
+            setLoading(true);
             const data = await getStudents();
             setStudentList(data);
           } catch (error) {
             console.log(error.message);
+          } finally {
+            setLoading(false);
           }
         }
 
@@ -168,6 +187,7 @@ const App = () => {
         </section>
 
         {/* <StudentForm onAddSubmit={handleAddSubmit} /> */}
+        {loading && <h3>Loading...</h3>}
         <StudentFormUseReducer
           onAddSubmit={handleAddSubmit}
           editData={editData}
