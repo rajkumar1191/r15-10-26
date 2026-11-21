@@ -24,6 +24,11 @@
       "id": "Ft4nc0Z70Ys",
       "name": "Rajkumar P",
       "course": "React"
+    },
+    {
+      "id": "AgkT1GTG6Cc",
+      "name": "Rajkumar P",
+      "course": "Angular"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

@@ -15,7 +15,8 @@
     "axios": "^1.21.1",
     "json-server": "^1.0.0-beta.15",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-router": "^8.5.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -24,3 +24,7 @@
     color: #2563eb;
     font-size: 2rem;
 }
+
+.active{
+    color: green;
+}

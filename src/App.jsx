@@ -10,6 +10,9 @@ import {
   getStudents,
   updateStudent,
 } from "./services/studentServicesByAxios";
+import { Routes, Route } from "react-router";
+import Home from "./components/Home";
+import Dashboard from "./components/Dashboard";
 
 // const initialStudents = [
 //   {
@@ -38,9 +41,9 @@ const App = () => {
     console.log("app rendered on every event");
   }); // triggers for every browser events
 
-  const delay = (ms) =>{
-    return new Promise(resolve => setTimeout(resolve, ms))
-  }
+  const delay = (ms) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  };
   //empty dependency array
   useEffect(() => {
     console.log("app rendered on mount");
@@ -50,7 +53,7 @@ const App = () => {
         console.log(loading);
         setLoading(true);
 
-        await delay(5000)
+        // await delay(5000);
         const data = await getStudents();
         setStudentList(data);
       } catch (error) {
@@ -67,48 +70,6 @@ const App = () => {
   useEffect(() => {
     console.log("app rendered on name variable update");
   }, [name]); // triggers only on the dependency get updates
-
-  const studentStats = useMemo(() => {
-    console.log("calculating student statistics...");
-
-    const total = studentList.length;
-
-    const reactStudents = studentList.filter(
-      (student) => student.course === "React",
-    ).length;
-    const angularStudents = studentList.filter(
-      (student) => student.course === "Angular",
-    ).length;
-
-    return {
-      total,
-      reactStudents,
-      angularStudents,
-    };
-  }, [studentList]);
-
-  const handleAddSubmit = async (student) => {
-    if (student.name) {
-      const added = await addStudent(student);
-      if (added.id) {
-        async function loadStudents() {
-          try {
-            setLoading(true);
-            const data = await getStudents();
-            setStudentList(data);
-          } catch (error) {
-            console.log(error.message);
-          } finally {
-            setLoading(false);
-          }
-        }
-
-        loadStudents();
-      }
-    }
-    console.log(studentList);
-    setName(`${name} - ${studentList.length}`);
-  };
 
   const handleEditSubmit = async (student) => {
     if (student.name) {
@@ -166,40 +127,59 @@ const App = () => {
   );
 
   return (
-    <div style={{ color: "orange", fontSize: "14px" }}>
-      <Header title={name} />
+    // <div style={{ color: "orange", fontSize: "14px" }}>
+    //   <Header title={name} />
 
-      <button onClick={() => setCount(count + 1)}>Increment : {count}</button>
-      <main>
-        <section className="dashboard">
-          <div className="stat-card">
-            <h3>Total Students</h3>
-            <h1>{studentStats.total}</h1>
-          </div>
-          <div className="stat-card">
-            <h3>React Students</h3>
-            <h1>{studentStats.reactStudents}</h1>
-          </div>
-          <div className="stat-card">
-            <h3>Angular Students</h3>
-            <h1>{studentStats.angularStudents}</h1>
-          </div>
-        </section>
+    //   <button onClick={() => setCount(count + 1)}>Increment : {count}</button>
+    //   <main>
 
-        {/* <StudentForm onAddSubmit={handleAddSubmit} /> */}
-        {loading && <h3>Loading...</h3>}
-        <StudentFormUseReducer
-          onAddSubmit={handleAddSubmit}
-          editData={editData}
-          onEditStudent={handleEditSubmit}
+    //     {/* <StudentForm onAddSubmit={handleAddSubmit} /> */}
+    //     {loading && <h3>Loading...</h3>}
+    //     {/* <StudentFormUseReducer
+    //       onAddSubmit={handleAddSubmit}
+    //       editData={editData}
+    //       onEditStudent={handleEditSubmit}
+    //     />
+    //     <StudentList
+    //       students={studentList}
+    //       onDeleteStudent={handleDeleteStudent}
+    //       onEditStudent={handleEditStudent}
+    //     /> */}
+    //   </main>
+    // </div>
+    <>
+      <Header />
+      <Routes>
+        <Route path="/" element={<Home />} />
+
+        <Route
+          path="/dashboard"
+          element={<Dashboard studentList={studentList} />}
         />
-        <StudentList
-          students={studentList}
-          onDeleteStudent={handleDeleteStudent}
-          onEditStudent={handleEditStudent}
+
+        <Route
+          path="/students"
+          element={
+            <StudentList
+              students={studentList}
+              onDeleteStudent={handleDeleteStudent}
+              onEditStudent={handleEditStudent}
+            />
+          }
         />
-      </main>
-    </div>
+
+        <Route
+          path="/students/add"
+          element={
+            <StudentFormUseReducer
+              studentList={studentList}
+              editData={editData}
+              onEditStudent={handleEditSubmit}
+            />
+          }
+        />
+      </Routes>
+    </>
   );
 };
 

@@ -1,4 +1,6 @@
 import { useEffect, useReducer } from "react";
+import { addStudent, updateStudent } from "../services/studentServicesByAxios";
+import { useNavigate } from "react-router";
 
 const initialFormState = {
   values: {
@@ -52,7 +54,8 @@ const studentFormReducer = (state, action) => {
   }
 };
 
-const StudentFormUseReducer = ({ onAddSubmit, editData, onEditStudent }) => {
+const StudentFormUseReducer = ({ editData }) => {
+  const navigate = useNavigate();
   /*
 
     const [state, dispatch] = useReducer(reducer, initialState)
@@ -112,7 +115,30 @@ const StudentFormUseReducer = ({ onAddSubmit, editData, onEditStudent }) => {
     return newErrors;
   };
 
-  const handleSubmit = (event) => {
+  // const handleAddSubmit = async (student) => {
+  // if (student.name) {
+  //   const added = await addStudent(student);
+  //   if (added.id) {
+  //     async function loadStudents() {
+  //       try {
+  //         setLoading(true);
+  //         const data = await getStudents();
+  //         setStudentList(data);
+  //       } catch (error) {
+  //         console.log(error.message);
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     }
+
+  //     loadStudents();
+  //   }
+  // }
+  // console.log(studentList);
+  // setName(`${name} - ${studentList.length}`);
+  // };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const validateErrors = validateForm();
@@ -138,9 +164,15 @@ const StudentFormUseReducer = ({ onAddSubmit, editData, onEditStudent }) => {
     };
 
     if (editData.id) {
-      onEditStudent(obj);
+      const added = await updateStudent(obj);
+      if (added) {
+        navigate("/students");
+      }
     } else {
-      onAddSubmit(obj);
+      const added = await addStudent(obj);
+      if (added) {
+        navigate("/students");
+      }
     }
     dispatch({ type: "RESET_FORM" });
   };
