@@ -9,6 +9,12 @@ export async function getStudents() {
   return response.data;
 }
 
+export async function getStudentById(id) {
+  const response = await api.get(`/students/${id}`);
+
+  return response.data;
+}
+
 export async function addStudent(student) {
   const response = await api.post("/students", student);
 
@@ -16,7 +22,7 @@ export async function addStudent(student) {
 }
 
 export async function updateStudent(student) {
-  const response = await api.put(`"/students/${student.id}`, student);
+  const response = await api.put(`/students/${student.id}`, student);
 
   return response.data;
 }

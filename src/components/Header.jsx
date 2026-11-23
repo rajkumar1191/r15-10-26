@@ -1,21 +1,48 @@
 import { memo } from "react";
-import { Link, NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 
-const Header = ({ title }) => {
-  console.log("header component");
+// Link    -> navigates without a full page reload
+// NavLink -> a Link that knows whether it is "active" (matches the current URL)
+const navClass = ({ isActive }) => (isActive ? "nav-link active" : "nav-link");
+
+const Header = ({ title, user, onLogout }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    onLogout();
+    navigate("/"); // programmatic navigation
+  };
+
   return (
     <header>
       <h1>{title}</h1>
       <p>Learn React Components</p>
       <nav>
-        <Link to="/">Home</Link>
-        <Link to="/dashboard">Dashboard</Link>
-        <Link to="/students">Students</Link>
-        <Link to="/students/add">Add Students</Link>
-        <NavLink to="/">Home</NavLink>
-        <NavLink to="/dashboard">Dashboard</NavLink>
-        <NavLink to="/students">Students</NavLink>
-        <NavLink to="/students/add" className={({isActive})=> isActive ? "active": ""}>Add Students</NavLink>
+        {/* end -> "/" is active only on exactly "/", not on every page */}
+        <NavLink to="/" end className={navClass}>
+          Home
+        </NavLink>
+        <NavLink to="/dashboard" className={navClass}>
+          Dashboard
+        </NavLink>
+        {/* end -> not highlighted while on /students/add */}
+        <NavLink to="/students" end className={navClass}>
+          Students
+        </NavLink>
+        <NavLink to="/students/add" className={navClass}>
+          Add Student
+        </NavLink>
+
+        {user ? (
+          <>
+            <span> Hi, {user} </span>
+            <button onClick={handleLogout}>Logout</button>
+          </>
+        ) : (
+          <NavLink to="/login" className={navClass}>
+            Login
+          </NavLink>
+        )}
       </nav>
     </header>
   );

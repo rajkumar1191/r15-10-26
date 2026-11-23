@@ -6,7 +6,7 @@ import { BrowserRouter } from "react-router";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter> 
+    <BrowserRouter>
       <App />
     </BrowserRouter>
   </StrictMode>,
@@ -362,5 +362,127 @@ names or CSS Modules for reusable and larger style definitions.
   axios -> 
     1. automatically convert response to json
     2. reject 2xx
-    
+
+===============================================================================
+Module 9: React Router  (package: "react-router", v7+/v8 - import everything
+from "react-router"; "react-router-dom" is no longer needed)
+===============================================================================
+
+17. React Router setup
+----------------------
+React Router maps URLs to components so a single-page app can have several
+"pages" without the browser reloading.
+
+  npm install react-router
+
+  <BrowserRouter>        // uses the browser History API (clean URLs)
+    <App />
+  </BrowserRouter>
+
+  - BrowserRouter must wrap every component that uses routing hooks or Link.
+
+18. Route configuration
+-----------------------
+  <Routes>                                     // picks the best match
+    <Route path="/" element={<Home />} />
+    <Route path="/students" element={<StudentList />} />
+    <Route path="*" element={<NotFound />} />  // catch-all (404)
+  </Routes>
+
+  - path: the URL pattern. element: the JSX to render when it matches.
+  - index route: <Route index element={...} /> is the default child shown at
+    the parent's exact path (e.g. "/students").
+  - Route without path but with element = "layout route" (e.g. Layout,
+    ProtectedRoute): it wraps children without adding a URL segment.
+  - Route with path but without element: only groups child paths
+    (path="students" groups ":id", "add", ":id/edit").
+  - Ranking: static segments beat dynamic ones, so "/students/add" matches the
+    "add" route, not ":id".
+
+19. Route parameters
+--------------------
+A segment that starts with ":" is a parameter:
+
+  <Route path="/students/:id" element={<StudentDetails />} />
+
+  const { id } = useParams();   // /students/3  ->  { id: "3" }
+
+  - Params are always strings.
+  - When only the param changes (/students/1 -> /students/2) the component
+    is NOT remounted; it re-renders, so use the param in useEffect
+    dependencies: useEffect(() => { load(id) }, [id]).
+  - Query strings (?search=raj) are read with useSearchParams(), not params.
+
+20. Dynamic routing
+-------------------
+Routes and links are driven by data instead of being hard-coded:
+
+  - One route "courses/:courseName" serves every course.
+  - Dashboard builds its menu from the data:
+      courses.map(c => <NavLink to={`courses/${c}`}>{c}</NavLink>)
+    A new course added in db.json gets its own page with no code change.
+  - Links are built from values: <Link to={`/students/${id}`} />.
+
+21. Nested routes
+-----------------
+Child routes render inside their parent through <Outlet />:
+
+  <Route path="dashboard" element={<Dashboard />}>
+    <Route index element={<DashboardOverview />} />          // /dashboard
+    <Route path="courses/:courseName" element={<CourseStudents />} />
+  </Route>
+
+  - Child paths are relative (no leading "/").
+  - Parent UI (title, menu) stays on screen; only the Outlet part changes.
+  - Layout uses the same idea for Header/Footer around every page.
+  - Relative links inside a nested component: to="." (current route),
+    to="courses/React", to=".." (parent).
+
+22. Navigation
+--------------
+  Declarative:
+    <Link to="/students">Students</Link>    // no full page reload (not <a>)
+    <NavLink to="/students" end className={({ isActive }) => ...}>
+      - NavLink knows if it is active; "end" = active only on exact match.
+    <Navigate to="/login" replace />        // redirect while rendering
+
+  Programmatic:
+    const navigate = useNavigate();
+    navigate("/students");                  // go to a path
+    navigate(`/students/${id}/edit`);       // with a param
+    navigate(-1);                           // back (like browser Back)
+    navigate("/", { replace: true });       // replace history entry
+    navigate("/login", { state: { from } }) // pass data -> useLocation().state
+
+  useLocation() returns { pathname, search, state, ... } for the current URL.
+
+23. Protected routes
+--------------------
+A layout route that checks auth before rendering its children:
+
+  const ProtectedRoute = ({ user }) => {
+    const location = useLocation();
+    if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Outlet />;
+  };
+
+  <Route element={<ProtectedRoute user={user} />}>
+    <Route path="dashboard" element={<Dashboard />} />
+  </Route>
+
+  The logged-in user is plain state in App (saved in localStorage so it
+  survives a refresh) and is passed down as props to Header, Login and
+  ProtectedRoute.
+
+  Flow: open /dashboard while logged out -> redirected to /login with the
+  original location in state -> after login, navigate(from, { replace: true })
+  returns the user to /dashboard. replace keeps /login out of the history.
+
+  Note: client-side protection only hides UI. The real security check must
+  happen on the server/API.
+
+  parent -> child -> child -> child -> child -> child -> child -> child -> props drilling
+
+  context api
+
 */

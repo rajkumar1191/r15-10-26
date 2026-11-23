@@ -1,6 +1,10 @@
 import { useEffect, useReducer } from "react";
-import { addStudent, updateStudent } from "../services/studentServicesByAxios";
-import { useNavigate } from "react-router";
+import {
+  addStudent,
+  getStudentById,
+  updateStudent,
+} from "../services/studentServicesByAxios";
+import { useNavigate, useParams } from "react-router";
 
 const initialFormState = {
   values: {
@@ -54,8 +58,13 @@ const studentFormReducer = (state, action) => {
   }
 };
 
-const StudentFormUseReducer = ({ editData }) => {
+// Used by two routes:
+//   /students/add       -> no :id param   -> add mode
+//   /students/:id/edit  -> :id param      -> edit mode (student loaded by id)
+const StudentFormUseReducer = ({ onSaved }) => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = Boolean(id);
   /*
 
     const [state, dispatch] = useReducer(reducer, initialState)
@@ -82,15 +91,24 @@ const StudentFormUseReducer = ({ editData }) => {
 
   const { values, errors } = formState;
 
+  // Load the student whenever the :id in the URL changes
   useEffect(() => {
-    if (editData?.id) {
-      console.log(editData);
-      dispatch({
-        type: "LOAD_FORM",
-        payload: editData,
+    if (!id) return;
+
+    let ignore = false;
+    getStudentById(id)
+      .then((student) => {
+        if (!ignore) dispatch({ type: "LOAD_FORM", payload: student });
+      })
+      .catch(() => {
+        // unknown id -> back to the list
+        if (!ignore) navigate("/students", { replace: true });
       });
-    }
-  }, [editData]);
+
+    return () => {
+      ignore = true;
+    };
+  }, [id, navigate]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -158,28 +176,23 @@ const StudentFormUseReducer = ({ editData }) => {
     });
 
     const obj = {
-      id: editData.id ? editData.id : Date.now(),
+      id: isEdit ? id : String(Date.now()),
       name: values.name,
       course: values.course,
     };
 
-    if (editData.id) {
-      const added = await updateStudent(obj);
-      if (added) {
-        navigate("/students");
-      }
-    } else {
-      const added = await addStudent(obj);
-      if (added) {
-        navigate("/students");
-      }
+    const saved = isEdit ? await updateStudent(obj) : await addStudent(obj);
+
+    if (saved) {
+      dispatch({ type: "RESET_FORM" });
+      await onSaved?.(); // let App reload the list
+      navigate(`/students/${saved.id}`); // go to the details page
     }
-    dispatch({ type: "RESET_FORM" });
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Add Student(via useReducer)</h2>
+      <h2>{isEdit ? "Edit Student" : "Add Student"} (via useReducer)</h2>
       <input
         type="text"
         placeholder="Student Name"
@@ -201,7 +214,7 @@ const StudentFormUseReducer = ({ editData }) => {
       <br />
       <br />
       <button className="button" type="submit">
-        {editData.id ? "Edit Student" : "Add Student"}
+        {isEdit ? "Update Student" : "Add Student"}
       </button>
     </form>
   );

@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import StudentCard from "./StudentCard";
 import styles from "./StudentList.module.css";
 
-const StudentList = ({ students, onDeleteStudent, onEditStudent }) => {
+const StudentList = ({ students, onDeleteStudent }) => {
   // const [studentList, setStudentList] = useState(students);
   console.log("student list component")
   const [search, setSearchKey] = useState("");
@@ -49,14 +49,13 @@ const StudentList = ({ students, onDeleteStudent, onEditStudent }) => {
               course={student.course}
               id={student.id}
               onDeleteStudent={onDeleteStudent}
-              onEditStudent={onEditStudent}
             />
           ))
         ) : (
           <p>No students found</p>
         )}
       </div>
-      <button className={styles.button}>Delete</button>
+      {/* <button className={styles.button}>Delete</button> */}
     </section>
   );
 };

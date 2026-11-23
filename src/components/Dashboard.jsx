@@ -1,39 +1,36 @@
 import { useMemo } from "react";
+import { NavLink, Outlet } from "react-router";
 
+// Parent of the nested dashboard routes:
+//   /dashboard                     -> <DashboardOverview />  (index route)
+//   /dashboard/courses/:courseName -> <CourseStudents />
+// The parent keeps its own UI (title + course menu) and the matched child is
+// rendered where <Outlet /> is placed.
 const Dashboard = ({ studentList }) => {
-  const studentStats = useMemo(() => {
-    console.log("calculating student statistics...");
-
-    const total = studentList.length;
-
-    const reactStudents = studentList.filter(
-      (student) => student.course === "React",
-    ).length;
-    const angularStudents = studentList.filter(
-      (student) => student.course === "Angular",
-    ).length;
-
-    return {
-      total,
-      reactStudents,
-      angularStudents,
-    };
-  }, [studentList]);
+  // Dynamic routing: the course links are generated from the data, so a new
+  // course in db.json automatically gets its own page without a new <Route>.
+  const courses = useMemo(
+    () => [...new Set(studentList.map((student) => student.course))],
+    [studentList],
+  );
 
   return (
-    <section className="dashboard">
-      <div className="stat-card">
-        <h3>Total Students</h3>
-        <h1>{studentStats.total}</h1>
-      </div>
-      <div className="stat-card">
-        <h3>React Students</h3>
-        <h1>{studentStats.reactStudents}</h1>
-      </div>
-      <div className="stat-card">
-        <h3>Angular Students</h3>
-        <h1>{studentStats.angularStudents}</h1>
-      </div>
+    <section>
+      <h2>Dashboard</h2>
+      <nav>
+        {/* relative path "." -> /dashboard ; end -> active only there */}
+        <NavLink to="." end>
+          Overview
+        </NavLink>
+        {courses.map((course) => (
+          // relative link: resolves to /dashboard/courses/<course>
+          <NavLink key={course} to={`courses/${course}`}>
+            {course}
+          </NavLink>
+        ))}
+      </nav>
+
+      <Outlet />
     </section>
   );
 };

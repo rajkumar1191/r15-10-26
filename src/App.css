@@ -28,3 +28,14 @@
 .active{
     color: green;
 }
+
+nav{
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.nav-link.active, nav a.active{
+    font-weight: bold;
+}

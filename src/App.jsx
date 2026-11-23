@@ -1,18 +1,18 @@
-import Header from "./components/Header";
-// import Footer from "./components/Footer";
 import StudentList from "./components/StudentList";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import StudentFormUseReducer from "./components/StudentFormUseReducer";
-import {
-  addStudent,
-  deleteStudent,
-  getStudents,
-  updateStudent,
-} from "./services/studentServicesByAxios";
+import { deleteStudent, getStudents } from "./services/studentServicesByAxios";
 import { Routes, Route } from "react-router";
 import Home from "./components/Home";
 import Dashboard from "./components/Dashboard";
+import DashboardOverview from "./components/DashboardOverview";
+import CourseStudents from "./components/CourseStudents";
+import Layout from "./components/Layout";
+import StudentDetails from "./components/StudentDetails";
+import Login from "./components/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
+import NotFound from "./components/NotFound";
 
 // const initialStudents = [
 //   {
@@ -28,42 +28,61 @@ import Dashboard from "./components/Dashboard";
 // ];
 
 const App = () => {
-  let [name, setName] = useState("Student Management");
-  const [count, setCount] = useState(0);
-  const [editData, setEditData] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [name] = useState("Student Management");
+  const [loading, setLoading] = useState(true);
   // useState()-> hook
   // const [studentList, setStudentList] = useState(initialStudents);
   const [studentList, setStudentList] = useState([]);
+
+  // Logged-in user (fake auth: just a name kept in localStorage so the
+  // login survives a page refresh). Passed down as props.
+  const [user, setUser] = useState(() => localStorage.getItem("user"));
+
+  const handleLogin = (username) => {
+    localStorage.setItem("user", username);
+    setUser(username);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+  };
 
   //no dependency array
   useEffect(() => {
     console.log("app rendered on every event");
   }); // triggers for every browser events
 
-  const delay = (ms) => {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  };
+  // Reload after add / edit / delete (called from event handlers)
+  const loadStudents = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getStudents();
+      setStudentList(data);
+    } catch (error) {
+      console.log(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   //empty dependency array
   useEffect(() => {
     console.log("app rendered on mount");
 
-    async function loadStudents() {
-      try {
-        console.log(loading);
-        setLoading(true);
+    let ignore = false;
+    getStudents()
+      .then((data) => {
+        if (!ignore) setStudentList(data);
+      })
+      .catch((error) => console.log(error.message))
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
 
-        // await delay(5000);
-        const data = await getStudents();
-        setStudentList(data);
-      } catch (error) {
-        console.log(error.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadStudents();
+    return () => {
+      ignore = true; // StrictMode runs effects twice in dev
+    };
   }, []); // triggers only at the component mount
 
   //dependency array
@@ -71,115 +90,97 @@ const App = () => {
     console.log("app rendered on name variable update");
   }, [name]); // triggers only on the dependency get updates
 
-  const handleEditSubmit = async (student) => {
-    if (student.name) {
-      const added = await updateStudent(student);
-      if (added.id) {
-        async function loadStudents() {
-          try {
-            setLoading(true);
-            const data = await getStudents();
-            setStudentList(data);
-          } catch (error) {
-            console.log(error.message);
-          } finally {
-            setLoading(false);
-          }
-        }
-
-        loadStudents();
-      }
-    }
-    console.log(studentList);
-    setName(`${name} - ${studentList.length}`);
-  };
-
-  const handleDeleteStudent = useCallback(async (id) => {
-    if (id) {
-      const added = await deleteStudent(id);
-      if (added.id) {
-        async function loadStudents() {
-          try {
-            setLoading(true);
-            const data = await getStudents();
-            setStudentList(data);
-          } catch (error) {
-            console.log(error.message);
-          } finally {
-            setLoading(false);
-          }
-        }
-
-        loadStudents();
-      }
-    }
-    console.log(studentList);
-    setName(`${name} - ${studentList.length}`);
-  }, []);
-
-  const handleEditStudent = useCallback(
-    (id) => {
-      const selectedStudent = studentList.find((student) => student.id === id);
-
-      setEditData(selectedStudent);
+  const handleDeleteStudent = useCallback(
+    async (id) => {
+      if (!id) return;
+      await deleteStudent(id);
+      loadStudents();
     },
-    [studentList],
+    [loadStudents],
   );
 
+  /*
+    Route tree (Module 9 - React Router)
+
+    /                               Home                (index route)
+    /login                          Login
+    /students                       StudentList         (index route)
+    /students/:id                   StudentDetails      (route parameter)
+    /students/add                   Add form            (protected)
+    /students/:id/edit              Edit form           (protected)
+    /dashboard                      Dashboard > Overview        (protected, nested)
+    /dashboard/courses/:courseName  Dashboard > CourseStudents  (protected, nested)
+    *                               NotFound            (catch-all 404)
+
+    Every page is nested in <Layout>, which renders Header/Footer + <Outlet />.
+    Static segments win over dynamic ones, so "/students/add" matches the add
+    route even though ":id" could also match "add".
+  */
   return (
-    // <div style={{ color: "orange", fontSize: "14px" }}>
-    //   <Header title={name} />
-
-    //   <button onClick={() => setCount(count + 1)}>Increment : {count}</button>
-    //   <main>
-
-    //     {/* <StudentForm onAddSubmit={handleAddSubmit} /> */}
-    //     {loading && <h3>Loading...</h3>}
-    //     {/* <StudentFormUseReducer
-    //       onAddSubmit={handleAddSubmit}
-    //       editData={editData}
-    //       onEditStudent={handleEditSubmit}
-    //     />
-    //     <StudentList
-    //       students={studentList}
-    //       onDeleteStudent={handleDeleteStudent}
-    //       onEditStudent={handleEditStudent}
-    //     /> */}
-    //   </main>
-    // </div>
-    <>
-      <Header />
-      <Routes>
-        <Route path="/" element={<Home />} />
-
+    <Routes>
+      <Route
+        element={
+          <Layout
+            title={name}
+            loading={loading}
+            user={user}
+            onLogout={handleLogout}
+          />
+        }
+      >
+        <Route index element={<Home />} />
         <Route
-          path="/dashboard"
-          element={<Dashboard studentList={studentList} />}
+          path="login"
+          element={<Login user={user} onLogin={handleLogin} />}
         />
 
-        <Route
-          path="/students"
-          element={
-            <StudentList
-              students={studentList}
-              onDeleteStudent={handleDeleteStudent}
-              onEditStudent={handleEditStudent}
+        <Route path="students" >
+          <Route
+            index
+            element={
+              <StudentList
+                students={studentList}
+                onDeleteStudent={handleDeleteStudent}
+              />
+            }
+          />
+          {/* students/231 */}
+          <Route path=":id" element={<StudentDetails />} />
+
+          {/* Protected: only logged-in users can add or edit */}
+          {/* students/add */}
+
+          <Route element={<ProtectedRoute user={user} />}>
+            <Route
+              path="add"
+              element={<StudentFormUseReducer onSaved={loadStudents} />}
             />
-          }
-        />
-
-        <Route
-          path="/students/add"
-          element={
-            <StudentFormUseReducer
-              studentList={studentList}
-              editData={editData}
-              onEditStudent={handleEditSubmit}
+            <Route
+              path=":id/edit"
+              element={<StudentFormUseReducer onSaved={loadStudents} />}
             />
-          }
-        />
-      </Routes>
-    </>
+          </Route>
+        </Route>
+
+        <Route element={<ProtectedRoute user={user} />}>
+          <Route
+            path="dashboard"
+            element={<Dashboard studentList={studentList} />}
+          >
+            <Route
+              index
+              element={<DashboardOverview studentList={studentList} />}
+            />
+            <Route
+              path="courses/:courseName"
+              element={<CourseStudents studentList={studentList} />}
+            />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
   );
 };
 
