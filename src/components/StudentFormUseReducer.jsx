@@ -5,6 +5,7 @@ import {
   updateStudent,
 } from "../services/studentServicesByAxios";
 import { useNavigate, useParams } from "react-router";
+import { useStudents } from "../context/StudentContext";
 
 const initialFormState = {
   values: {
@@ -61,7 +62,8 @@ const studentFormReducer = (state, action) => {
 // Used by two routes:
 //   /students/add       -> no :id param   -> add mode
 //   /students/:id/edit  -> :id param      -> edit mode (student loaded by id)
-const StudentFormUseReducer = ({ onSaved }) => {
+const StudentFormUseReducer = () => {
+  const { loadStudents } = useStudents();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -185,7 +187,7 @@ const StudentFormUseReducer = ({ onSaved }) => {
 
     if (saved) {
       dispatch({ type: "RESET_FORM" });
-      await onSaved?.(); // let App reload the list
+      await loadStudents(); // refresh the global student list
       navigate(`/students/${saved.id}`); // go to the details page
     }
   };

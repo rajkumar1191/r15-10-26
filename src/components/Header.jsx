@@ -1,15 +1,20 @@
 import { memo } from "react";
 import { NavLink, useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 // Link    -> navigates without a full page reload
 // NavLink -> a Link that knows whether it is "active" (matches the current URL)
 const navClass = ({ isActive }) => (isActive ? "nav-link active" : "nav-link");
 
-const Header = ({ title, user, onLogout }) => {
+const Header = ({ title }) => {
+  // useContext (via custom hooks): read shared values directly, no props
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    onLogout();
+    logout();
     navigate("/"); // programmatic navigation
   };
 
@@ -43,6 +48,10 @@ const Header = ({ title, user, onLogout }) => {
             Login
           </NavLink>
         )}
+
+        <button onClick={toggleTheme}>
+          {theme === "light" ? "Dark mode" : "Light mode"}
+        </button>
       </nav>
     </header>
   );

@@ -1,8 +1,11 @@
 import React, { useMemo, useRef, useState } from "react";
 import StudentCard from "./StudentCard";
 import styles from "./StudentList.module.css";
+import { useStudents } from "../context/StudentContext";
 
-const StudentList = ({ students, onDeleteStudent }) => {
+const StudentList = () => {
+  // Global state: read the list and the delete action from StudentContext
+  const { students, removeStudent } = useStudents();
   // const [studentList, setStudentList] = useState(students);
   console.log("student list component")
   const [search, setSearchKey] = useState("");
@@ -48,7 +51,7 @@ const StudentList = ({ students, onDeleteStudent }) => {
               name={student.name}
               course={student.course}
               id={student.id}
-              onDeleteStudent={onDeleteStudent}
+              onDeleteStudent={removeStudent}
             />
           ))
         ) : (

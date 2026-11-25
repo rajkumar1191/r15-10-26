@@ -1,8 +1,10 @@
 import { Link, useParams } from "react-router";
+import { useStudents } from "../context/StudentContext";
 
 // Route: /dashboard/courses/:courseName (nested inside /dashboard)
 // One <Route> handles every course; the course comes from the URL.
-const CourseStudents = ({ studentList }) => {
+const CourseStudents = () => {
+  const { students: studentList } = useStudents();
   const { courseName } = useParams();
 
   const students = studentList.filter(

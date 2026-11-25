@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
 
-const Login = ({ user, onLogin }) => {
+const Login = () => {
   const [username, setUsername] = useState("");
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -18,7 +20,7 @@ const Login = ({ user, onLogin }) => {
     event.preventDefault();
     if (!username.trim()) return;
 
-    onLogin(username.trim());
+    login(username.trim());
     // replace: true -> pressing Back won't return to the login page
     navigate(from, { replace: true });
   };

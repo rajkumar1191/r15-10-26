@@ -3,11 +3,21 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 import { BrowserRouter } from "react-router";
+import ThemeProvider from "./context/ThemeProvider.jsx";
+import AuthProvider from "./context/AuthProvider.jsx";
+import StudentProvider from "./context/StudentProvider.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      {/* Providers wrap App so every component can read their values */}
+      <ThemeProvider>
+        <AuthProvider>
+          <StudentProvider>
+            <App />
+          </StudentProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </StrictMode>,
 );
@@ -480,6 +490,132 @@ A layout route that checks auth before rendering its children:
 
   Note: client-side protection only hides UI. The real security check must
   happen on the server/API.
+
+  Module 10 update: user now comes from AuthContext (useAuth()) instead of
+  props - see section 27.
+
+===============================================================================
+Module 10: Context API
+===============================================================================
+
+24. Introduction to Context API
+-------------------------------
+Problem - "prop drilling": data needed deep in the tree must be passed through
+every component in between, even ones that never use it.
+
+  Before (Module 9):
+    App (user) -> Layout (user, only to pass on) -> Header (uses user)
+    App (studentList) -> Dashboard / DashboardOverview / CourseStudents ...
+
+Context lets a parent PROVIDE a value once, and any component below it READ
+the value directly, no matter how deep.
+
+Use context for data many components need: logged-in user, theme, language,
+shared app data. Do NOT put everything in context: state used by one
+component (form inputs, search text) should stay local with useState.
+
+Three steps:  createContext  ->  Provider  ->  useContext
+
+25. Creating Context
+--------------------
+  // context/ThemeContext.js
+  import { createContext } from "react";
+  export const ThemeContext = createContext(defaultValue);
+
+  - defaultValue is used ONLY when a component has no matching Provider
+    above it. ThemeContext uses { theme: "light", toggleTheme: () => {} }.
+  - AuthContext / StudentContext use null and a custom hook that throws a
+    clear error if the Provider is missing.
+  - Keep the context object in its own file (.js) and the Provider component
+    in another (.jsx), so files export either components or non-components
+    (needed for Vite fast refresh).
+
+26. Provider and Consumer
+------------------------
+Provider - supplies the value to everything inside it:
+
+  <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    {children}
+  </ThemeContext.Provider>
+
+  React 19 shorter syntax (same thing):
+  <AuthContext value={{ user, login, logout }}>{children}</AuthContext>
+
+  - A Provider is usually wrapped in its own component (ThemeProvider,
+    AuthProvider, StudentProvider) that owns the state with useState.
+  - When value changes, every component that reads the context re-renders.
+  - Providers can be nested; main.jsx wraps App with all three.
+  - The nearest Provider above a component wins.
+
+Consumer - the older (pre-hooks) way to read a context. Its child is a
+function that receives the value (see Footer.jsx):
+
+  <ThemeContext.Consumer>
+    {({ theme }) => <footer>Theme: {theme}</footer>}
+  </ThemeContext.Consumer>
+
+27. useContext Hook
+-------------------
+The modern way to read a context in a function component:
+
+  const { theme, toggleTheme } = useContext(ThemeContext);
+
+  - Returns the value of the nearest Provider above the component.
+  - Follows the normal hook rules (top level of a component / custom hook).
+  - Custom hook pattern used in this project:
+
+      export const useAuth = () => {
+        const context = useContext(AuthContext);
+        if (!context) throw new Error("useAuth must be used inside <AuthProvider>");
+        return context;
+      };
+
+      const { user, logout } = useAuth();   // in Header, Login, ProtectedRoute
+
+  - React 19 also has use(ThemeContext), which can be called inside if
+    statements; useContext is still the common choice.
+
+28. Global State Management
+---------------------------
+Context + useState (or useReducer) = simple global state.
+StudentProvider owns:
+
+  state:    students, loading
+  actions:  loadStudents(), removeStudent(id)
+
+  const value = useMemo(
+    () => ({ students, loading, loadStudents, removeStudent }),
+    [students, loading, loadStudents, removeStudent],
+  );
+  return <StudentContext value={value}>{children}</StudentContext>;
+
+  - Components never call setStudents directly; they call the actions.
+    All the logic for changing the data is in one place.
+  - useMemo / useCallback keep the value reference stable, so consumers
+    re-render only when something in it really changes.
+  - Split contexts by concern (Theme, Auth, Students): a theme change does
+    not re-render components that only read students.
+  - For large apps with complex updates, libraries such as Redux Toolkit or
+    Zustand are common; Context is enough for this app.
+
+29. Sharing Data Across Components
+----------------------------------
+Unrelated components now read the same data with no props:
+
+  Home            -> useAuth().user, useStudents().students
+  Header          -> useAuth() (user, logout), useTheme() (toggle button)
+  Layout          -> useStudents().loading, useTheme().theme (CSS class)
+  StudentList     -> useStudents() (students, removeStudent)
+  Dashboard, DashboardOverview, CourseStudents -> useStudents().students
+  StudentForm     -> useStudents().loadStudents after saving
+  Login / ProtectedRoute -> useAuth()
+  Footer          -> ThemeContext.Consumer
+
+Deleting a student in StudentList updates the global list, so the Home
+count and Dashboard stats update too.
+
+Props are still right for parent -> direct child data
+(e.g. StudentList -> StudentCard name/course/onDeleteStudent).
 
   parent -> child -> child -> child -> child -> child -> child -> child -> props drilling
 

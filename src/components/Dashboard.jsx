@@ -1,12 +1,14 @@
 import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
+import { useStudents } from "../context/StudentContext";
 
 // Parent of the nested dashboard routes:
 //   /dashboard                     -> <DashboardOverview />  (index route)
 //   /dashboard/courses/:courseName -> <CourseStudents />
 // The parent keeps its own UI (title + course menu) and the matched child is
 // rendered where <Outlet /> is placed.
-const Dashboard = ({ studentList }) => {
+const Dashboard = () => {
+  const { students: studentList } = useStudents();
   // Dynamic routing: the course links are generated from the data, so a new
   // course in db.json automatically gets its own page without a new <Route>.
   const courses = useMemo(

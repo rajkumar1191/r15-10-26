@@ -1,7 +1,9 @@
 import { useMemo } from "react";
+import { useStudents } from "../context/StudentContext";
 
 // Index route of /dashboard: shown at exactly "/dashboard"
-const DashboardOverview = ({ studentList }) => {
+const DashboardOverview = () => {
+  const { students: studentList } = useStudents();
   const studentStats = useMemo(() => {
     console.log("calculating student statistics...");
 
