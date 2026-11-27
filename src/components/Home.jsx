@@ -1,12 +1,13 @@
 import { Link } from "react-router";
 import { useAuth } from "../context/AuthContext";
-import { useStudents } from "../context/StudentContext";
+import { useSelector } from "react-redux";
+import { selectStudents } from "../features/students/studentsSlice";
 
-// Sharing data across components: Home is not related to StudentList or
-// Header, yet it reads the same user and student list from context.
+// Reads from both: the user from AuthContext (Context API) and the student
+// list from the Redux store.
 const Home = () => {
   const { user } = useAuth();
-  const { students } = useStudents();
+  const students = useSelector(selectStudents);
 
   return (
     <section>

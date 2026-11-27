@@ -1,5 +1,7 @@
 import StudentList from "./components/StudentList";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { fetchStudents } from "./features/students/studentsSlice";
 import "./App.css";
 import StudentFormUseReducer from "./components/StudentFormUseReducer";
 import { Routes, Route } from "react-router";
@@ -28,11 +30,16 @@ import NotFound from "./components/NotFound";
 
 const App = () => {
   const [name] = useState("Student Management");
+  const dispatch = useDispatch();
 
-  // Module 10: the student list, loading flag and logged-in user used to be
-  // state here and were passed down as props. They now live in
-  // StudentProvider / AuthProvider (see main.jsx) and components read them
-  // with useStudents() / useAuth().
+  // Load students once when the app starts (async thunk -> Redux store)
+  useEffect(() => {
+    dispatch(fetchStudents());
+  }, [dispatch]);
+
+  // Module 10: the logged-in user lives in AuthProvider (Context).
+  // Module 11: the student list lives in the Redux store (see store/store.js);
+  // components read it with useSelector and change it with useDispatch.
 
   //no dependency array
   useEffect(() => {

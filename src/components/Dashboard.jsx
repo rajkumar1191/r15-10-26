@@ -1,6 +1,6 @@
-import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
-import { useStudents } from "../context/StudentContext";
+import { useSelector } from "react-redux";
+import { selectCourses } from "../features/students/studentsSlice";
 
 // Parent of the nested dashboard routes:
 //   /dashboard                     -> <DashboardOverview />  (index route)
@@ -8,13 +8,11 @@ import { useStudents } from "../context/StudentContext";
 // The parent keeps its own UI (title + course menu) and the matched child is
 // rendered where <Outlet /> is placed.
 const Dashboard = () => {
-  const { students: studentList } = useStudents();
   // Dynamic routing: the course links are generated from the data, so a new
   // course in db.json automatically gets its own page without a new <Route>.
-  const courses = useMemo(
-    () => [...new Set(studentList.map((student) => student.course))],
-    [studentList],
-  );
+  // selectCourses is a memoized selector (createSelector), so the useMemo
+  // that was here is no longer needed.
+  const courses = useSelector(selectCourses);
 
   return (
     <section>

@@ -1,27 +1,10 @@
-import { useMemo } from "react";
-import { useStudents } from "../context/StudentContext";
+import { useSelector } from "react-redux";
+import { selectStudentStats } from "../features/students/studentsSlice";
 
 // Index route of /dashboard: shown at exactly "/dashboard"
 const DashboardOverview = () => {
-  const { students: studentList } = useStudents();
-  const studentStats = useMemo(() => {
-    console.log("calculating student statistics...");
-
-    const total = studentList.length;
-
-    const reactStudents = studentList.filter(
-      (student) => student.course === "React",
-    ).length;
-    const angularStudents = studentList.filter(
-      (student) => student.course === "Angular",
-    ).length;
-
-    return {
-      total,
-      reactStudents,
-      angularStudents,
-    };
-  }, [studentList]);
+  // The stats calculation moved into a memoized selector in the slice
+  const studentStats = useSelector(selectStudentStats);
 
   return (
     <section className="dashboard">

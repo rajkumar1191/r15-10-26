@@ -1,11 +1,22 @@
 import React, { useMemo, useRef, useState } from "react";
 import StudentCard from "./StudentCard";
 import styles from "./StudentList.module.css";
-import { useStudents } from "../context/StudentContext";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  removeStudent,
+  selectCourseFilter,
+  selectCourses,
+  selectFilteredStudents,
+  setCourseFilter,
+} from "../features/students/studentsSlice";
 
 const StudentList = () => {
-  // Global state: read the list and the delete action from StudentContext
-  const { students, removeStudent } = useStudents();
+  const dispatch = useDispatch();
+  // Global state (Redux): course filter survives leaving and coming back
+  const students = useSelector(selectFilteredStudents);
+  const courses = useSelector(selectCourses);
+  const courseFilter = useSelector(selectCourseFilter);
+  // Local state: the search text only matters to this component
   // const [studentList, setStudentList] = useState(students);
   console.log("student list component")
   const [search, setSearchKey] = useState("");
@@ -40,6 +51,18 @@ const StudentList = () => {
         onChange={(e) => setSearchKey(e.target.value)}
       />
 
+      <select
+        value={courseFilter}
+        onChange={(e) => dispatch(setCourseFilter(e.target.value))}
+      >
+        <option value="All">All courses</option>
+        {courses.map((course) => (
+          <option key={course} value={course}>
+            {course}
+          </option>
+        ))}
+      </select>
+
       <button onClick={handleFocus}>Focus Search</button>
       <button onClick={handleClear}>Clear Focus</button>
 
@@ -51,7 +74,7 @@ const StudentList = () => {
               name={student.name}
               course={student.course}
               id={student.id}
-              onDeleteStudent={removeStudent}
+              onDeleteStudent={(id) => dispatch(removeStudent(id))}
             />
           ))
         ) : (

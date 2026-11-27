@@ -1,11 +1,8 @@
 import { useEffect, useReducer } from "react";
-import {
-  addStudent,
-  getStudentById,
-  updateStudent,
-} from "../services/studentServicesByAxios";
+import { getStudentById } from "../services/studentServicesByAxios";
 import { useNavigate, useParams } from "react-router";
-import { useStudents } from "../context/StudentContext";
+import { useDispatch } from "react-redux";
+import { createStudent, editStudent } from "../features/students/studentsSlice";
 
 const initialFormState = {
   values: {
@@ -63,7 +60,11 @@ const studentFormReducer = (state, action) => {
 //   /students/add       -> no :id param   -> add mode
 //   /students/:id/edit  -> :id param      -> edit mode (student loaded by id)
 const StudentFormUseReducer = () => {
-  const { loadStudents } = useStudents();
+  // Named reduxDispatch because "dispatch" below belongs to useReducer
+  // (local form state). Two different dispatch functions:
+  //   dispatch      -> this component's reducer (form fields, errors)
+  //   reduxDispatch -> the global Redux store (student list)
+  const reduxDispatch = useDispatch();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -183,12 +184,17 @@ const StudentFormUseReducer = () => {
       course: values.course,
     };
 
-    const saved = isEdit ? await updateStudent(obj) : await addStudent(obj);
+    try {
+      // unwrap(): returns the payload on success, throws on rejected
+      const saved = await reduxDispatch(
+        isEdit ? editStudent(obj) : createStudent(obj),
+      ).unwrap();
 
-    if (saved) {
       dispatch({ type: "RESET_FORM" });
-      await loadStudents(); // refresh the global student list
       navigate(`/students/${saved.id}`); // go to the details page
+    } catch (error) {
+      // the notifications slice already shows the error message
+      console.log(error.message);
     }
   };
 

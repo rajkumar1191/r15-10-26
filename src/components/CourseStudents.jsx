@@ -1,10 +1,11 @@
 import { Link, useParams } from "react-router";
-import { useStudents } from "../context/StudentContext";
+import { useSelector } from "react-redux";
+import { selectStudents } from "../features/students/studentsSlice";
 
 // Route: /dashboard/courses/:courseName (nested inside /dashboard)
 // One <Route> handles every course; the course comes from the URL.
 const CourseStudents = () => {
-  const { students: studentList } = useStudents();
+  const studentList = useSelector(selectStudents);
   const { courseName } = useParams();
 
   const students = studentList.filter(

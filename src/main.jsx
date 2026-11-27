@@ -5,20 +5,22 @@ import App from "./App.jsx";
 import { BrowserRouter } from "react-router";
 import ThemeProvider from "./context/ThemeProvider.jsx";
 import AuthProvider from "./context/AuthProvider.jsx";
-import StudentProvider from "./context/StudentProvider.jsx";
+import { Provider } from "react-redux";
+import { store } from "./store/store.js";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
-      {/* Providers wrap App so every component can read their values */}
-      <ThemeProvider>
-        <AuthProvider>
-          <StudentProvider>
+    {/* Redux: makes the store available to useSelector / useDispatch */}
+    <Provider store={store}>
+      <BrowserRouter>
+        {/* Context providers for theme and auth */}
+        <ThemeProvider>
+          <AuthProvider>
             <App />
-          </StudentProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </Provider>
   </StrictMode>,
 );
 
@@ -616,6 +618,207 @@ count and Dashboard stats update too.
 
 Props are still right for parent -> direct child data
 (e.g. StudentList -> StudentCard name/course/onDeleteStudent).
+
+  Module 11 update: the student list moved from StudentProvider (Context) to
+  Redux Toolkit. Theme and Auth stay in Context - see section 38.
+
+===============================================================================
+Module 11: Redux Toolkit
+  npm install @reduxjs/toolkit react-redux
+===============================================================================
+
+30. Introduction to Redux
+-------------------------
+Redux keeps the app's global state in ONE place, the store, and allows it to
+change only in one predictable way:
+
+    UI --dispatch(action)--> middleware --> reducers --> new state --> UI
+
+  - Store: one object tree holding the global state.
+      { students: { items, status, error, courseFilter },
+        notifications: { message, type } }
+  - Action: a plain object describing WHAT happened.
+      { type: "students/setCourseFilter", payload: "React" }
+  - Reducer: a pure function (state, action) => newState. No API calls, no
+    random values, no mutation of the old state (the new state is a copy).
+  - dispatch(action): the only way to change the state.
+  - Selector: a function that reads a piece of state: state => state.x
+
+Why: every change goes through actions, so state changes are easy to follow
+and debug (Redux DevTools shows each action and the state before/after).
+
+Context vs Redux: Context only PASSES a value down; you still
+write the state logic yourself (useState in a Provider). Redux is a full
+state-management library: store, actions, reducers, middleware, DevTools,
+and components re-render only for the part of the state they select.
+
+31. Redux Toolkit (RTK)
+-----------------------
+The official, recommended way to write Redux. Plain Redux needed a lot of
+hand-written code (action type constants, action creators, switch
+reducers, spread copies, thunk setup). RTK provides:
+
+  configureStore    store with good defaults (thunk, DevTools, dev checks)
+  createSlice       state + reducers + action creators in one place
+  createAsyncThunk  async logic (API calls) with pending/fulfilled/rejected
+  createSelector    memoized selectors
+  Immer (built in)  write "mutating" code that produces immutable updates
+
+react-redux connects Redux to React:
+  <Provider store={store}>  make the store available (main.jsx)
+  useSelector(selector)     read state; re-render when that value changes
+  useDispatch()             get dispatch to send actions
+
+32. Store Configuration
+-----------------------
+  // store/store.js
+  export const store = configureStore({
+    reducer: {
+      students: studentsReducer,           // -> state.students
+      notifications: notificationsReducer, // -> state.notifications
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(logger),
+  });
+
+  // main.jsx
+  <Provider store={store}>
+    <App />
+  </Provider>
+
+  - The reducer object keys become the top-level keys of the state.
+  - configureStore combines the reducers (combineReducers) for you.
+
+33. Slices
+----------
+A slice = one feature's state + the reducers that update it
+(features/students/studentsSlice.js).
+
+  const studentsSlice = createSlice({
+    name: "students",                       // prefix of the action types
+    initialState: { items: [], status: "idle", error: null, courseFilter: "All" },
+    reducers: { setCourseFilter(state, action) { ... } },
+    extraReducers: (builder) => { ... },    // actions from outside the slice
+  });
+
+  export const { setCourseFilter } = studentsSlice.actions;  // action creators
+  export default studentsSlice.reducer;                      // for the store
+
+Organise by feature: features/students, features/notifications, each
+with its slice, thunks and selectors together.
+
+34. Actions
+-----------
+createSlice generates an action creator for every reducer:
+
+  setCourseFilter("React")
+  // -> { type: "students/setCourseFilter", payload: "React" }
+
+  dispatch(setCourseFilter("React"));   // StudentList dropdown
+  dispatch(dismissNotification());      // Layout "x" button
+
+  - type = "<slice name>/<reducer name>"
+  - payload = the argument passed to the action creator
+  - Thunks also produce actions: students/remove/pending, .../fulfilled,
+    .../rejected
+
+35. Reducers
+------------
+  reducers: {
+    setCourseFilter(state, action) {
+      state.courseFilter = action.payload;   // looks like mutation...
+    },
+  }
+
+  - Immer: you "mutate" a draft; RTK turns it into a new immutable state.
+    Either mutate the draft OR return a new value - never both.
+  - Reducers must stay pure: no API calls, no Date.now(), no navigate().
+  - extraReducers handle actions created elsewhere:
+      builder.addCase(fetchStudents.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+  - One action can be handled by MANY slices: removeStudent.fulfilled
+    updates students.items AND sets notifications.message.
+  - addMatcher(isRejected, ...) handles every rejected thunk in one place.
+
+36. Async Thunks
+----------------
+Reducers cannot be async, so API calls go in thunks:
+
+  export const fetchStudents = createAsyncThunk(
+    "students/fetchAll",
+    async () => getStudents(),          // returned value -> action.payload
+  );
+
+  Dispatching it sends:
+    students/fetchAll/pending    -> status = "loading"
+    students/fetchAll/fulfilled  -> status = "succeeded", items = payload
+    students/fetchAll/rejected   -> status = "failed", error = message
+
+  Thunks in this app: fetchStudents (App start), createStudent and
+  editStudent (form), removeStudent (Delete button).
+
+  - Second argument thunkAPI: { dispatch, getState, rejectWithValue, ... }
+  - rejectWithValue(msg): send your own error payload (removeStudent).
+  - condition option: skip the thunk, e.g. if already loading.
+  - In a component: await dispatch(createStudent(obj)).unwrap()
+    unwrap() returns the payload, or throws if the thunk was rejected, so
+    the form can navigate only after a successful save.
+  - Track request status in state ("idle" | "loading" | "succeeded" | "failed")
+    instead of a separate loading boolean.
+
+37. Middleware
+--------------
+Middleware sits between dispatch and the reducers. Every action passes
+through it, so it can log, change, delay or stop actions, or start side
+effects.
+
+  const logger = (store) => (next) => (action) => {
+    console.log("dispatching", action);
+    const result = next(action);           // pass on to the reducers
+    console.log("next state", store.getState());
+    return result;
+  };
+
+  - Default middleware from configureStore:
+      redux-thunk     lets dispatch accept functions (createAsyncThunk)
+      immutability    dev-only: warns if state is mutated outside reducers
+      serializability dev-only: warns about non-serializable values
+                      (Promises, class instances, functions) in state/actions
+  - Add your own with getDefaultMiddleware().concat(logger).
+    Do not replace the defaults unless you mean to remove them.
+  - Open the browser console and click Delete: you will see
+    students/remove/pending, students/remove/fulfilled, each with the
+    state before and after.
+
+38. State Architecture
+----------------------
+Choose where each piece of state lives:
+
+  Local state (useState / useReducer) - used by one component
+    StudentList search text, StudentForm fields + errors (useReducer)
+
+  URL (React Router) - should survive refresh / be shareable
+    /students/:id, /dashboard/courses/:courseName
+
+  Context - simple values that change rarely and are needed everywhere
+    ThemeContext (theme), AuthContext (user)
+
+  Redux store - shared app data, changed in many places, async loading
+    students (items, status, error, courseFilter), notifications
+
+Store layout guidelines:
+  - One slice per feature; keep related state, thunks and selectors together.
+  - Keep state minimal; DERIVE everything else with selectors
+    (selectFilteredStudents, selectCourses, selectStudentStats) instead of
+    storing copies that can go out of sync.
+  - Memoize derived data with createSelector.
+  - Store only serializable data (no functions, Promises, DOM nodes).
+  - Components dispatch "what happened"; reducers decide how the state
+    changes.
+  - Large lists: createEntityAdapter normalises them into { ids, entities }.
+  - Lots of server data: RTK Query (part of RTK) can handle fetching and
+    caching for you.
 
   parent -> child -> child -> child -> child -> child -> child -> child -> props drilling
 
